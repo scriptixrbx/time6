@@ -1,16 +1,8 @@
--- Delta авто-спам скрипт для MM2 с Server Hop
+-- MM2 спам скрипт (без авто-перезахода)
 local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
 local player = Players.LocalPlayer
-local placeId = game.PlaceId
 
--- Проверяем что мы в MM2
-if placeId ~= 142823291 then
-    warn("❌ Это не MM2! Запустите скрипт в Murder Mystery 2")
-    return
-end
-
--- Флаг для автозапуска
+-- Флаг для работы
 getgenv().AutoSpamEnabled = true
 
 local messages = {
@@ -46,63 +38,26 @@ local function sendMessage(text)
     end)
 end
 
--- Простой Server Hop через queue_on_teleport
-local function serverHop()
-    print("🔄 Выполняю Server Hop...")
-    
-    -- Используем queue_on_teleport для авто-запуска после перехода
-    if queue_on_teleport then
-        queue_on_teleport([[
-            task.wait(5)
-            loadstring(game:HttpGet("https://pastebin.com/raw/YOUR_SCRIPT_CODE"))()
-        ]])
-    end
-    
-    -- Просто телепортируемся на случайный сервер
-    local success = pcall(function()
-        -- Вариант 1: Прямой телепорт (самый надежный)
-        TeleportService:Teleport(placeId)
-    end)
-    
-    if not success then
-        pcall(function()
-            -- Вариант 2: Через синглтон
-            game:GetService("TeleportService"):Teleport(placeId)
-        end)
-    end
-    
-    return true
-end
-
--- Основной цикл
+-- Основной цикл (без перезахода)
 local function mainLoop()
-    print("🤖 Авто-спам запущен!")
-    print("🔄 Режим: 5 сообщений → Server Hop")
+    print("🤖 Спам скрипт запущен!")
+    print("📢 Только спам, без перезахода")
     
-    local cycleCount = 0
+    local messageCount = 0
     
     while getgenv().AutoSpamEnabled do
-        cycleCount += 1
-        print("\n=== Цикл " .. cycleCount .. " ===")
+        messageCount += 1
+        print("\n📊 Цикл сообщений #" .. messageCount)
         
         -- Ждем загрузки чата
-        for i = 1, 10 do
+        for i = 1, 5 do
             local chatLoaded = pcall(function()
                 return game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents") ~= nil
             end)
             
             if chatLoaded then
-                print("✅ Чат загружен")
                 break
             end
-            
-            if i == 10 then
-                print("⚠️ Чат не загрузился, пробую Server Hop")
-                serverHop()
-                task.wait(10)
-                continue
-            end
-            
             task.wait(1)
         end
         
@@ -113,55 +68,40 @@ local function mainLoop()
             if not getgenv().AutoSpamEnabled then break end
             
             sendMessage(shuffled[i])
-            print("📢 [" .. i .. "/5] " .. string.sub(shuffled[i], 1, 20) .. "...")
+            print("📢 [" .. i .. "/5] отправлено")
             
             if i < 5 then
-                task.wait(math.random(3, 4)) -- Задержка 3-4 секунды
+                task.wait(math.random(2, 3)) -- Задержка 2-3 секунды
             end
         end
         
-        -- Server Hop после 5 сообщений
+        -- Пауза перед следующим набором сообщений (без перезахода)
         if getgenv().AutoSpamEnabled then
-            print("🔄 Отправка завершена, делаю Server Hop...")
-            task.wait(1) -- Короткая пауза
-            
-            -- Вызываем Server Hop
-            local hopSuccess = serverHop()
-            
-            if hopSuccess then
-                print("✅ Server Hop выполнен, жду перехода...")
-                -- Ждем телепортацию
-                for i = 1, 15 do
-                    if not getgenv().AutoSpamEnabled then break end
-                    task.wait(1)
-                end
-            end
+            print("⏸️ Пауза перед следующим циклом...")
+            task.wait(10) -- Ждем 10 секунд перед следующим циклом
         end
     end
     
-    print("⏹️ Авто-спам остановлен")
+    print("⏹️ Спам остановлен")
 end
 
 -- Авто-запуск
-print("========================================")
-print("🤖 MM2 AUTO-SPAM WITH SERVER HOP")
-print("📢 Автоматический режим")
-print("📢 5 сообщений → Server Hop → Повтор")
-print("========================================")
+print("================================")
+print("🤖 MM2 СПАМ СКРИПТ")
+print("📢 Без авто-перезахода")
+print("📢 Только отправка сообщений")
+print("================================")
 
 -- Запускаем через 3 секунды
 task.wait(3)
 
--- Запускаем основной цикл в отдельном потоке
+-- Запускаем основной цикл
 local success, err = pcall(function()
     mainLoop()
 end)
 
 if not success then
-    print("⚠️ Ошибка в основном цикле: " .. err)
-    print("🔄 Пробую перезапустить...")
-    task.wait(5)
-    mainLoop()
+    print("⚠️ Ошибка: " .. err)
 end
 
 -- Функция остановки
